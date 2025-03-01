@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slide to Unlock</title>
+  <style>
+    body {
+      background-color: rgb(40, 30, 30);
+      margin: 0;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    /* 슬라이더 컨테이너: 드래그바 역할, overflow를 visible로 태양이 밖에 나타날 수 있게 함 */
+    .slider-container {
+      width: 300px;
+      height: 60px;
+      background: rgb(68,68,68);
+      border-radius: 30px;
+      padding: 5px;
+      position: relative;
+      overflow: visible;
+      z-index: 2;
+    }
+    /* 하단 화살표: 슬라이더 컨테이너 밑 15px 위치, 선택 불가능 */
+    .bottom-arrow {
+      margin-top: 15px;
+      user-select: none;
+      pointer-events: none;
+    }
+    /* 기존 컴퍼스 슬라이더: 좌측에서 드래그 가능 */
+    .slider {
+      width: 50px;
+      height: 50px;
+      position: absolute;
+      left: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: grab;
+      transition: left 0.2s ease-out;
+      user-select: none;
+      z-index: 3;
+    }
+    /* 태양: 페이지 중앙에서 시작, fixed 위치 */
+    .sun {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- 태양 요소 (고대 그리스 양식 태양, 검정색) -->
+  <div class="sun" id="sun">
+    <svg width="50" height="50" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="32" cy="32" r="10" fill="black"/>
+      <line x1="32" y1="2" x2="32" y2="12" stroke="black" stroke-width="2"/>
+      <line x1="32" y1="52" x2="32" y2="62" stroke="black" stroke-width="2"/>
+      <line x1="2" y1="32" x2="12" y2="32" stroke="black" stroke-width="2"/>
+      <line x1="52" y1="32" x2="62" y2="32" stroke="black" stroke-width="2"/>
+      <line x1="10" y1="10" x2="18" y2="18" stroke="black" stroke-width="2"/>
+      <line x1="46" y1="46" x2="54" y2="54" stroke="black" stroke-width="2"/>
+      <line x1="10" y1="54" x2="18" y2="46" stroke="black" stroke-width="2"/>
+      <line x1="46" y1="18" x2="54" y2="10" stroke="black" stroke-width="2"/>
+    </svg>
+  </div>
+  
+  <!-- 슬라이더 컨테이너 및 기존 컴퍼스 슬라이더 -->
+  <div class="slider-container" id="sliderContainer">
+    <div class="slider" id="slider" draggable="false">
+      <svg width="50" height="50" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="30" fill="none" stroke="white" stroke-width="2"/>
+        <polygon points="32,8 28,26 36,26" fill="red"/>
+      </svg>
+    </div>
+  </div>
+  
+  <!-- 슬라이더 컨테이너 밑 15px에 하얀색 화살표 (드래그 불가능) -->
+  <div class="bottom-arrow" id="bottomArrow" draggable="false">
+    <svg width="30" height="30" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="20,32 44,32" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <polyline points="38,26 44,32 38,38" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>
+  </div>
+  
+  <script>
+    const slider = document.getElementById("slider");
+    const sun = document.getElementById("sun");
+    const sliderContainer = document.getElementById("sliderContainer");
+    
+    let isDragging = false;
+    let startX = 0;
+    const unlockThreshold = 250; // 드래그 임계값 (px)
+    const maxSunRise = 225;      // 태양 최대 상승 거리 (px)
+    const sunHeight = 50;        // 태양 SVG 높이
+    
+    // 초기 배경 색상
+    const initialBodyColor = { r: 40, g: 30, b: 30 };
+    const finalColor = { r: 255, g: 255, b: 255 };
+    // 슬라이더 컨테이너 초기 색상: #444 = rgb(68,68,68)
+    const initialSliderColor = { r: 68, g: 68, b: 68 };
+    
+    // 슬라이더 컨테이너의 top (중앙 정렬 가정)
+    const containerHeight = 60;
+    const containerTop = (window.innerHeight - containerHeight) / 2;
+    
+    // 초기 태양 위치: 페이지 중앙 (sun의 top)
+    const initialSunTop = window.innerHeight / 2 - sunHeight / 2;
+    sun.style.top = initialSunTop + "px";
+    
+    // 선형 보간 함수
+    function lerpColor(start, end, t) {
+      const r = Math.round(start.r + (end.r - start.r) * t);
+      const g = Math.round(start.g + (end.g - start.g) * t);
+      const b = Math.round(start.b + (end.b - start.b) * t);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+    
+    // 배경 색상 업데이트 (body와 슬라이더 컨테이너)
+    function updateBackgrounds(progress) {
+      document.body.style.backgroundColor = lerpColor(initialBodyColor, finalColor, progress);
+      sliderContainer.style.backgroundColor = lerpColor(initialSliderColor, finalColor, progress);
+    }
+    
+    // 태양 위치 및 페이드 효과 업데이트  
+    function updateSun(progress) {
+      let newTop = initialSunTop - maxSunRise * progress;
+      sun.style.top = newTop + "px";
+      
+      let sunBottom = newTop + sunHeight;
+      const fadeRange = 50;
+      let opacity = 0;
+      if (sunBottom <= containerTop - fadeRange) {
+        opacity = 1;
+      } else if (sunBottom < containerTop) {
+        opacity = (containerTop - sunBottom) / fadeRange;
+      } else {
+        opacity = 0;
+      }
+      sun.style.opacity = opacity;
+    }
+    
+    function startDrag(e) {
+      e.preventDefault();
+      isDragging = true;
+      startX = e.clientX || e.touches[0].clientX;
+      slider.style.transition = "none";
+      sun.style.transition = "none";
+      resetIdleTimer();
+    }
+    
+    function onDrag(e) {
+      if (!isDragging) return;
+      const currentX = e.clientX || e.touches[0].clientX;
+      const offset = currentX - startX;
+      if (offset > 0 && offset < unlockThreshold) {
+        slider.style.left = (5 + offset) + "px";
+        let progress = offset / unlockThreshold;
+        updateBackgrounds(progress);
+        updateSun(progress);
+      }
+      if (offset >= unlockThreshold) {
+        window.location.href = "https://eastproto2.imweb.me/main/";
+        isDragging = false;
+      }
+      resetIdleTimer();
+    }
+    
+    function endDrag() {
+      if (isDragging) {
+        isDragging = false;
+        slider.style.transition = "left 0.2s ease-out";
+        slider.style.left = "5px";
+        updateBackgrounds(0);
+        sun.style.transition = "top 0.2s ease-out, opacity 0.2s ease-out";
+        sun.style.top = initialSunTop + "px";
+        sun.style.opacity = 0;
+        resetIdleTimer();
+      }
+    }
+    
+    slider.addEventListener("mousedown", startDrag);
+    document.addEventListener("mousemove", onDrag);
+    document.addEventListener("mouseup", endDrag);
+    slider.addEventListener("touchstart", startDrag);
+    document.addEventListener("touchmove", onDrag);
+    document.addEventListener("touchend", endDrag);
+    
+    let idleTimer;
+    function redirectToMain() {
+      window.location.href = "https://eastproto2.imweb.me/main/";
+    }
+    function resetIdleTimer() {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(redirectToMain, 2500);
+    }
+    resetIdleTimer();
+  </script>
+</body>
+</html>
