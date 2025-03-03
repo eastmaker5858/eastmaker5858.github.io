@@ -6,7 +6,7 @@
   <title>EAST casting</title>
   <style>
     body {
-      background-color: rgb(40, 30, 30);
+      background-color: rgb(40, 40, 40); /* 중립적인 다크 그레이 */
       margin: 0;
       user-select: none;
       display: flex;
@@ -15,13 +15,12 @@
       justify-content: center;
       height: 100vh;
     }
-    /* 슬라이더 컨테이너: 드래그바 역할, overflow를 visible로 태양이 밖에 나타날 수 있게 함 */
+    /* 슬라이더 컨테이너: 단순 연한 회색 바, 높이 10px, 가로 300px */
     .slider-container {
       width: 300px;
-      height: 60px;
-      background: rgb(68,68,68);
-      border-radius: 30px;
-      padding: 5px;
+      height: 10px;
+      background: rgb(200,200,200);
+      border-radius: 5px;
       position: relative;
       overflow: visible;
       z-index: 2;
@@ -32,20 +31,22 @@
       user-select: none;
       pointer-events: none;
     }
-    /* 기존 컴퍼스 슬라이더: 좌측에서 드래그 가능 */
+    /* 슬라이더: 하얀 공, 50px, 슬라이드바 위에 배치 (컨테이너 중앙에서 위로 20px) */
     .slider {
       width: 50px;
       height: 50px;
+      background: white;
+      border-radius: 50%;
       position: absolute;
       left: 5px;
-      top: 50%;
-      transform: translateY(-50%);
+      /* 슬라이더 컨테이너의 높이가 10px이므로, 중앙은 5px. 공의 중심(25px)을 맞추기 위해 5-25 = -20px */
+      top: -20px;
       cursor: grab;
       transition: left 0.2s ease-out;
       user-select: none;
       z-index: 3;
     }
-    /* 태양: 페이지 중앙에서 시작, fixed 위치 */
+    /* 태양: 페이지 정중앙에서 시작, fixed 위치 */
     .sun {
       position: fixed;
       left: 50%;
@@ -71,14 +72,9 @@
     </svg>
   </div>
   
-  <!-- 슬라이더 컨테이너 및 기존 컴퍼스 슬라이더 -->
+  <!-- 슬라이더 컨테이너 및 슬라이더(하얀 공) -->
   <div class="slider-container" id="sliderContainer">
-    <div class="slider" id="slider" draggable="false">
-      <svg width="50" height="50" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="30" fill="none" stroke="white" stroke-width="2"/>
-        <polygon points="32,8 28,26 36,26" fill="red"/>
-      </svg>
-    </div>
+    <div class="slider" id="slider" draggable="false"></div>
   </div>
   
   <!-- 슬라이더 컨테이너 밑 15px에 하얀색 화살표 (드래그 불가능) -->
@@ -100,14 +96,14 @@
     const maxSunRise = 225;      // 태양 최대 상승 거리 (px)
     const sunHeight = 50;        // 태양 SVG 높이
     
-    // 초기 배경 색상
-    const initialBodyColor = { r: 40, g: 30, b: 30 };
+    // 초기 배경 색상 (body) 및 슬라이더 컨테이너 색상
+    const initialBodyColor = { r: 40, g: 40, b: 40 };
     const finalColor = { r: 255, g: 255, b: 255 };
-    // 슬라이더 컨테이너 초기 색상: #444 = rgb(68,68,68)
-    const initialSliderColor = { r: 68, g: 68, b: 68 };
+    // 슬라이더 컨테이너 초기 색상: #C8C8C8 = rgb(200,200,200)
+    const initialSliderColor = { r: 200, g: 200, b: 200 };
     
     // 슬라이더 컨테이너의 top (중앙 정렬 가정)
-    const containerHeight = 60;
+    const containerHeight = 10;
     const containerTop = (window.innerHeight - containerHeight) / 2;
     
     // 초기 태양 위치: 페이지 중앙 (sun의 top)
