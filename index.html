@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EAST casting</title>
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.png" type="image/png">
   <style>
     body {
-      background-color: rgb(40, 40, 40); /* 중립적인 다크 그레이 */
+      background-color: rgb(40, 40, 40);
       margin: 0;
       user-select: none;
       display: flex;
@@ -32,7 +32,7 @@
       user-select: none;
       pointer-events: none;
     }
-    /* 슬라이더(드래그하는 공): 크기를 25px로 줄이고, 컨테이너 왼쪽 끝에 붙임 */
+    /* 슬라이더(드래그하는 공): 크기를 25px로, 왼쪽 끝에 붙여 배치 */
     .slider {
       width: 25px;
       height: 25px;
@@ -73,7 +73,7 @@
     </svg>
   </div>
   
-  <!-- 슬라이더 컨테이너 및 슬라이더 (드래그 공) -->
+  <!-- 슬라이더 컨테이너 및 슬라이더 (드래그하는 공) -->
   <div class="slider-container" id="sliderContainer">
     <div class="slider" id="slider" draggable="false"></div>
   </div>
@@ -97,11 +97,10 @@
     const maxSunRise = 225;      // 태양 최대 상승 (px)
     const sunHeight = 50;        // 태양 SVG 높이
     
-    // 초기 배경 색상
+    // 초기 배경 색상 및 슬라이더 컨테이너 색상
     const initialBodyColor = { r: 40, g: 40, b: 40 };
     const finalColor = { r: 255, g: 255, b: 255 };
-    // 슬라이더 컨테이너 초기 색상: rgb(200,200,200)
-    const initialSliderColor = { r: 200, g: 200, b: 200 };
+    const initialSliderColor = { r: 200, g: 200, b: 200 }; // 슬라이더 컨테이너 배경
     
     // 슬라이더 컨테이너의 top (중앙 정렬 가정)
     const containerHeight = 10;
@@ -125,7 +124,7 @@
       sliderContainer.style.backgroundColor = lerpColor(initialSliderColor, finalColor, progress);
     }
     
-    // 태양 위치 및 페이드 효과 업데이트  
+    // 태양 위치 및 페이드 효과 업데이트
     function updateSun(progress) {
       let newTop = initialSunTop - maxSunRise * progress;
       sun.style.top = newTop + "px";
@@ -195,7 +194,8 @@
     }
     function resetIdleTimer() {
       clearTimeout(idleTimer);
-      idleTimer = setTimeout(redirectToMain, 2500);
+      // 5초(5000ms)로 idle 타이머 변경
+      idleTimer = setTimeout(redirectToMain, 5000);
     }
     resetIdleTimer();
   </script>
