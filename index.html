@@ -15,7 +15,7 @@
       justify-content: center;
       height: 100vh;
     }
-    /* 슬라이더 컨테이너: 단순 연한 회색 바, 높이 10px, 가로 300px */
+    /* 슬라이더 컨테이너: 드래그바 역할 */
     .slider-container {
       width: 300px;
       height: 10px;
@@ -31,16 +31,16 @@
       user-select: none;
       pointer-events: none;
     }
-    /* 슬라이더: 하얀 공, 50px, 슬라이드바 위에 배치 (컨테이너 중앙에서 위로 20px) */
+    /* 슬라이더(드래그하는 공): 크기를 25px로 줄이고, 컨테이너 왼쪽 끝에 붙임 */
     .slider {
-      width: 50px;
-      height: 50px;
+      width: 25px;
+      height: 25px;
       background: white;
       border-radius: 50%;
       position: absolute;
-      left: 5px;
-      /* 슬라이더 컨테이너의 높이가 10px이므로, 중앙은 5px. 공의 중심(25px)을 맞추기 위해 5-25 = -20px */
-      top: -20px;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
       cursor: grab;
       transition: left 0.2s ease-out;
       user-select: none;
@@ -72,7 +72,7 @@
     </svg>
   </div>
   
-  <!-- 슬라이더 컨테이너 및 슬라이더(하얀 공) -->
+  <!-- 슬라이더 컨테이너 및 슬라이더 (드래그 공) -->
   <div class="slider-container" id="sliderContainer">
     <div class="slider" id="slider" draggable="false"></div>
   </div>
@@ -93,13 +93,13 @@
     let isDragging = false;
     let startX = 0;
     const unlockThreshold = 250; // 드래그 임계값 (px)
-    const maxSunRise = 225;      // 태양 최대 상승 거리 (px)
+    const maxSunRise = 225;      // 태양 최대 상승 (px)
     const sunHeight = 50;        // 태양 SVG 높이
     
-    // 초기 배경 색상 (body) 및 슬라이더 컨테이너 색상
+    // 초기 배경 색상
     const initialBodyColor = { r: 40, g: 40, b: 40 };
     const finalColor = { r: 255, g: 255, b: 255 };
-    // 슬라이더 컨테이너 초기 색상: #C8C8C8 = rgb(200,200,200)
+    // 슬라이더 컨테이너 초기 색상: rgb(200,200,200)
     const initialSliderColor = { r: 200, g: 200, b: 200 };
     
     // 슬라이더 컨테이너의 top (중앙 정렬 가정)
@@ -156,7 +156,7 @@
       const currentX = e.clientX || e.touches[0].clientX;
       const offset = currentX - startX;
       if (offset > 0 && offset < unlockThreshold) {
-        slider.style.left = (5 + offset) + "px";
+        slider.style.left = offset + "px";
         let progress = offset / unlockThreshold;
         updateBackgrounds(progress);
         updateSun(progress);
@@ -172,7 +172,7 @@
       if (isDragging) {
         isDragging = false;
         slider.style.transition = "left 0.2s ease-out";
-        slider.style.left = "5px";
+        slider.style.left = "0px";
         updateBackgrounds(0);
         sun.style.transition = "top 0.2s ease-out, opacity 0.2s ease-out";
         sun.style.top = initialSunTop + "px";
