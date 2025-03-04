@@ -16,28 +16,26 @@
       justify-content: center;
       height: 100vh;
     }
-    /* 슬라이더 컨테이너: 드래그바 역할 */
+    /* 슬라이드바: 300px 가로, 2px 높이의 얇은 직선 */
     .slider-container {
       width: 300px;
-      height: 10px;
+      height: 2px;
       background: rgb(200,200,200);
-      border-radius: 5px;
+      border-radius: 1px;
       position: relative;
       overflow: visible;
       z-index: 2;
     }
-    /* 하단 화살표: 슬라이더 컨테이너 밑 15px 위치, 선택 불가능 */
+    /* 하단 화살표: 슬라이드바 밑 15px 위치 */
     .bottom-arrow {
       margin-top: 15px;
       user-select: none;
       pointer-events: none;
     }
-    /* 슬라이더(드래그하는 공): 크기를 25px로, 왼쪽 끝에 붙여 배치 */
+    /* 슬라이더: 25px 크기의 빈 원, 왼쪽 끝에 붙음 */
     .slider {
       width: 25px;
       height: 25px;
-      background: white;
-      border-radius: 50%;
       position: absolute;
       left: 0;
       top: 50%;
@@ -47,7 +45,7 @@
       user-select: none;
       z-index: 3;
     }
-    /* 태양: 페이지 정중앙에서 시작, fixed 위치 */
+    /* 태양: 페이지 중앙에 고정 */
     .sun {
       position: fixed;
       left: 50%;
@@ -73,9 +71,14 @@
     </svg>
   </div>
   
-  <!-- 슬라이더 컨테이너 및 슬라이더 (드래그하는 공) -->
+  <!-- 슬라이더 컨테이너 및 슬라이더(드래그하는 공) -->
   <div class="slider-container" id="sliderContainer">
-    <div class="slider" id="slider" draggable="false"></div>
+    <div class="slider" id="slider" draggable="false">
+      <svg width="25" height="25" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+        <!-- 내부 원에 id를 부여하여 fill을 업데이트 -->
+        <circle id="sliderCircle" cx="12.5" cy="12.5" r="11.5" stroke="white" stroke-width="2" fill="rgb(40,40,40)"/>
+      </svg>
+    </div>
   </div>
   
   <!-- 슬라이더 컨테이너 밑 15px에 하얀색 화살표 (드래그 불가능) -->
@@ -88,6 +91,7 @@
   
   <script>
     const slider = document.getElementById("slider");
+    const sliderCircle = document.getElementById("sliderCircle");
     const sun = document.getElementById("sun");
     const sliderContainer = document.getElementById("sliderContainer");
     
@@ -100,10 +104,10 @@
     // 초기 배경 색상 및 슬라이더 컨테이너 색상
     const initialBodyColor = { r: 40, g: 40, b: 40 };
     const finalColor = { r: 255, g: 255, b: 255 };
-    const initialSliderColor = { r: 200, g: 200, b: 200 }; // 슬라이더 컨테이너 배경
+    const initialSliderColor = { r: 200, g: 200, b: 200 };
     
     // 슬라이더 컨테이너의 top (중앙 정렬 가정)
-    const containerHeight = 10;
+    const containerHeight = 2;
     const containerTop = (window.innerHeight - containerHeight) / 2;
     
     // 초기 태양 위치: 페이지 중앙 (sun의 top)
@@ -120,11 +124,14 @@
     
     // 배경 색상 업데이트 (body와 슬라이더 컨테이너)
     function updateBackgrounds(progress) {
-      document.body.style.backgroundColor = lerpColor(initialBodyColor, finalColor, progress);
+      const bgColor = lerpColor(initialBodyColor, finalColor, progress);
+      document.body.style.backgroundColor = bgColor;
       sliderContainer.style.backgroundColor = lerpColor(initialSliderColor, finalColor, progress);
+      // 슬라이더 내부 원도 동일한 색상으로 업데이트 (그라데이션 효과)
+      sliderCircle.setAttribute("fill", bgColor);
     }
     
-    // 태양 위치 및 페이드 효과 업데이트
+    // 태양 위치 및 페이드 효과 업데이트  
     function updateSun(progress) {
       let newTop = initialSunTop - maxSunRise * progress;
       sun.style.top = newTop + "px";
@@ -194,7 +201,6 @@
     }
     function resetIdleTimer() {
       clearTimeout(idleTimer);
-      // 5초(5000ms)로 idle 타이머 변경
       idleTimer = setTimeout(redirectToMain, 5000);
     }
     resetIdleTimer();
