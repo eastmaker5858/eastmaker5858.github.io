@@ -75,7 +75,7 @@
   <div class="slider-container" id="sliderContainer">
     <div class="slider" id="slider" draggable="false">
       <svg width="25" height="25" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
-        <!-- 내부 원: fill은 배경색과 동일하게, stroke는 인버스 색상 -->
+        <!-- 내부 원: fill은 배경색과 동일, stroke는 인버스 색상 -->
         <circle id="sliderCircle" cx="12.5" cy="12.5" r="11.5" stroke="rgb(215,215,215)" stroke-width="2" fill="rgb(40,40,40)"/>
       </svg>
     </div>
@@ -98,7 +98,9 @@
     let isDragging = false;
     let startX = 0;
     let lastOffset = 0;
-    const unlockThreshold = 275; // 슬라이더 컨테이너 최대 이동: 300 - slider width (25) = 275px
+    // 기존 최대 이동거리는 300 - sliderWidth = 300 - 25 = 275px, 
+    // 여기서 추가로 15px 더 이동해야 하므로 unlockThreshold = 275 + 15 = 290px.
+    const unlockThreshold = 290; // px
     const maxSunRise = 225;      // px
     const sunHeight = 50;        // px
     
@@ -124,7 +126,6 @@
       return `rgb(${r}, ${g}, ${b})`;
     }
     
-    // 업데이트: 배경은 원래대로, 슬라이드바와 하단 화살표는 인버스, 슬라이더 내부 원은 배경색과 동일하게
     function updateBackgrounds(progress) {
       const bgColor = lerpColor(initialBodyColor, finalColor, progress);
       document.body.style.backgroundColor = bgColor;
@@ -135,7 +136,6 @@
         el.setAttribute("stroke", invColor);
       });
       
-      // 슬라이더 내부 원: fill = 배경색, stroke = 인버스 색상
       sliderCircle.setAttribute("fill", bgColor);
       sliderCircle.setAttribute("stroke", invColor);
     }
@@ -171,7 +171,8 @@
       const offset = currentX - startX;
       lastOffset = offset;
       if (offset > 0 && offset < unlockThreshold) {
-        slider.style.left = offset + "px";
+        // 시작 위치는 왼쪽 5px: 실제 left = 5px + offset
+        slider.style.left = (5 + offset) + "px";
         let progress = offset / unlockThreshold;
         updateBackgrounds(progress);
         updateSun(progress);
@@ -185,7 +186,7 @@
           window.location.href = "https://eastproto2.imweb.me/main/";
         } else {
           slider.style.transition = "left 0.2s ease-out";
-          slider.style.left = "0px";
+          slider.style.left = "5px";
           updateBackgrounds(0);
           sun.style.transition = "top 0.2s ease-out, opacity 0.2s ease-out";
           sun.style.top = initialSunTop + "px";
