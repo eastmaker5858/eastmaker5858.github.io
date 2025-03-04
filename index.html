@@ -45,7 +45,7 @@
       user-select: none;
       z-index: 3;
     }
-    /* 태양: 페이지 중앙에 고정 */
+    /* 태양: 페이지 정중앙에 고정 */
     .sun {
       position: fixed;
       left: 50%;
@@ -71,21 +71,21 @@
     </svg>
   </div>
   
-  <!-- 슬라이더 컨테이너 및 슬라이더(드래그하는 공) -->
+  <!-- 슬라이더 컨테이너 및 슬라이더 (드래그하는 공) -->
   <div class="slider-container" id="sliderContainer">
     <div class="slider" id="slider" draggable="false">
       <svg width="25" height="25" viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
-        <!-- 내부 원에 id를 부여하여 fill을 업데이트 -->
-        <circle id="sliderCircle" cx="12.5" cy="12.5" r="11.5" stroke="white" stroke-width="2" fill="rgb(40,40,40)"/>
+        <!-- 내부 원: fill은 배경색과 동일하게, stroke는 인버스 색상 -->
+        <circle id="sliderCircle" cx="12.5" cy="12.5" r="11.5" stroke="rgb(215,215,215)" stroke-width="2" fill="rgb(40,40,40)"/>
       </svg>
     </div>
   </div>
   
-  <!-- 슬라이더 컨테이너 밑 15px에 하얀색 화살표 (드래그 불가능) -->
+  <!-- 하단 화살표 -->
   <div class="bottom-arrow" id="bottomArrow" draggable="false">
     <svg width="30" height="30" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-      <polyline points="20,32 44,32" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <polyline points="38,26 44,32 38,38" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <polyline points="20,32 44,32" stroke="rgb(215,215,215)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <polyline points="38,26 44,32 38,38" stroke="rgb(215,215,215)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </svg>
   </div>
   
@@ -97,14 +97,17 @@
     
     let isDragging = false;
     let startX = 0;
-    const unlockThreshold = 250; // 드래그 임계값 (px)
-    const maxSunRise = 225;      // 태양 최대 상승 (px)
-    const sunHeight = 50;        // 태양 SVG 높이
+    let lastOffset = 0;
+    const unlockThreshold = 275; // 슬라이더 컨테이너 최대 이동: 300 - slider width (25) = 275px
+    const maxSunRise = 225;      // px
+    const sunHeight = 50;        // px
     
-    // 초기 배경 색상 및 슬라이더 컨테이너 색상
+    // 배경 색상: from rgb(40,40,40) to white
     const initialBodyColor = { r: 40, g: 40, b: 40 };
     const finalColor = { r: 255, g: 255, b: 255 };
-    const initialSliderColor = { r: 200, g: 200, b: 200 };
+    // 인버스 색상: from rgb(215,215,215) to black
+    const initialOppColor = { r: 215, g: 215, b: 215 };
+    const finalOppColor = { r: 0, g: 0, b: 0 };
     
     // 슬라이더 컨테이너의 top (중앙 정렬 가정)
     const containerHeight = 2;
@@ -114,7 +117,6 @@
     const initialSunTop = window.innerHeight / 2 - sunHeight / 2;
     sun.style.top = initialSunTop + "px";
     
-    // 선형 보간 함수
     function lerpColor(start, end, t) {
       const r = Math.round(start.r + (end.r - start.r) * t);
       const g = Math.round(start.g + (end.g - start.g) * t);
@@ -122,16 +124,22 @@
       return `rgb(${r}, ${g}, ${b})`;
     }
     
-    // 배경 색상 업데이트 (body와 슬라이더 컨테이너)
+    // 업데이트: 배경은 원래대로, 슬라이드바와 하단 화살표는 인버스, 슬라이더 내부 원은 배경색과 동일하게
     function updateBackgrounds(progress) {
       const bgColor = lerpColor(initialBodyColor, finalColor, progress);
       document.body.style.backgroundColor = bgColor;
-      sliderContainer.style.backgroundColor = lerpColor(initialSliderColor, finalColor, progress);
-      // 슬라이더 내부 원도 동일한 색상으로 업데이트 (그라데이션 효과)
+      
+      const invColor = lerpColor(initialOppColor, finalOppColor, progress);
+      sliderContainer.style.backgroundColor = invColor;
+      document.querySelectorAll("#bottomArrow polyline").forEach(el => {
+        el.setAttribute("stroke", invColor);
+      });
+      
+      // 슬라이더 내부 원: fill = 배경색, stroke = 인버스 색상
       sliderCircle.setAttribute("fill", bgColor);
+      sliderCircle.setAttribute("stroke", invColor);
     }
     
-    // 태양 위치 및 페이드 효과 업데이트  
     function updateSun(progress) {
       let newTop = initialSunTop - maxSunRise * progress;
       sun.style.top = newTop + "px";
@@ -155,36 +163,34 @@
       startX = e.clientX || e.touches[0].clientX;
       slider.style.transition = "none";
       sun.style.transition = "none";
-      resetIdleTimer();
     }
     
     function onDrag(e) {
       if (!isDragging) return;
       const currentX = e.clientX || e.touches[0].clientX;
       const offset = currentX - startX;
+      lastOffset = offset;
       if (offset > 0 && offset < unlockThreshold) {
         slider.style.left = offset + "px";
         let progress = offset / unlockThreshold;
         updateBackgrounds(progress);
         updateSun(progress);
       }
-      if (offset >= unlockThreshold) {
-        window.location.href = "https://eastproto2.imweb.me/main/";
-        isDragging = false;
-      }
-      resetIdleTimer();
     }
     
     function endDrag() {
       if (isDragging) {
         isDragging = false;
-        slider.style.transition = "left 0.2s ease-out";
-        slider.style.left = "0px";
-        updateBackgrounds(0);
-        sun.style.transition = "top 0.2s ease-out, opacity 0.2s ease-out";
-        sun.style.top = initialSunTop + "px";
-        sun.style.opacity = 0;
-        resetIdleTimer();
+        if (lastOffset >= unlockThreshold) {
+          window.location.href = "https://eastproto2.imweb.me/main/";
+        } else {
+          slider.style.transition = "left 0.2s ease-out";
+          slider.style.left = "0px";
+          updateBackgrounds(0);
+          sun.style.transition = "top 0.2s ease-out, opacity 0.2s ease-out";
+          sun.style.top = initialSunTop + "px";
+          sun.style.opacity = 0;
+        }
       }
     }
     
@@ -194,16 +200,6 @@
     slider.addEventListener("touchstart", startDrag);
     document.addEventListener("touchmove", onDrag);
     document.addEventListener("touchend", endDrag);
-    
-    let idleTimer;
-    function redirectToMain() {
-      window.location.href = "https://eastproto2.imweb.me/main/";
-    }
-    function resetIdleTimer() {
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(redirectToMain, 5000);
-    }
-    resetIdleTimer();
   </script>
 </body>
 </html>
